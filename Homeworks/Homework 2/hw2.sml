@@ -163,7 +163,7 @@ fun remove_card (cs, c, e) =
 (* Returns true if all the cards in cs are of the same color *)
 fun all_same_color cs =
    case cs of
-        c1::c2::cs' => (card_color c1 = card_color c2) andalso all_same_color cs'
+        c1::c2::cs' => (card_color c1 = card_color c2) andalso all_same_color (c2::cs')
       | _ => true (* accounts for situations where cs has length 0 or 1 *)
 
 

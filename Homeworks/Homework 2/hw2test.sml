@@ -3,7 +3,7 @@
 (* To run the test, add a new line to the top of this file: use "homeworkname.sml"; *)
 (* All the tests should evaluate to true. For example, the REPL should say: val test1 = true : bool *)
 
-use "hw2provided.sml"; 
+use "hw2.sml";
 
 val test1a = all_except_option ("string", ["string"]) = SOME []
 val test1b = all_except_option ("123", ["string"]) = NONE
@@ -57,6 +57,7 @@ val test8a = all_same_color [(Hearts, Ace), (Hearts, Ace)] = true
 val test8b = all_same_color [(Spades, Num 3), (Hearts, Num 2)] = false
 val test8c = all_same_color [] = true
 val test8d = all_same_color [(Clubs, Ace)] = true 
+val test8e = all_same_color [(Clubs,Ace),(Spades,Ace),(Diamonds,Ace)] = false
 
 val test9a = sum_cards [(Clubs, Num 2),(Clubs, Num 2)] = 4
 val test9b = sum_cards [(Spades, Jack), (Clubs, Ace)] = 21
