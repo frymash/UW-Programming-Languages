@@ -22,46 +22,66 @@ val test3b = get_substitutions2([["Fred","Fredrick"],["Elizabeth","Betty"],["Fre
 val test3c = get_substitutions2([["Fred","Fredrick"],["Jeff","Jeffrey"],["Geoff","Jeff","Jeffrey"]], "Jeff") 
            = ["Jeffrey","Geoff","Jeffrey"] 
 
-(* val test4a = similar_names ([["Fred","Fredrick"],
+val test4a = similar_names ([["Fred","Fredrick"],
                              ["Elizabeth","Betty"],
                              ["Freddie","Fred","F"]], 
                              {first="Fred", middle="W", last="Smith"}) 
            = [{first="Fred", last="Smith", middle="W"},
               {first="Fredrick", last="Smith", middle="W"},
-	          {first="Freddie", last="Smith", middle="W"}, 
-              {first="F", last="Smith", middle="W"}] *)
+	           {first="Freddie", last="Smith", middle="W"}, 
+              {first="F", last="Smith", middle="W"}]
 
-(* val test4b = similar_names([["Fred","Fredrick"],["Elizabeth","Betty"],
-                            ["Freddie","Fred","F"]],
-                            {first="Fred", middle="W", last="Smith"})
-           = [{first="Fred", last="Smith", middle="W"},
-              {first="Fredrick", last="Smith", middle="W"},
-              {first="Freddie", last="Smith", middle="W"},
-              {first="F", last="Smith", middle="W"}] *) 
+val test4b = similar_names([["John","Johnathan"],
+                            ["Elizabeth", "Betty"],
+                            ["Jonathan", "John"]],
+                            {first="John", middle="J", last="Doe"})
+           = [{first="John", last="Doe", middle="J"},
+              {first="Johnathan", last="Doe", middle="J"},
+              {first="Jonathan", last="Doe", middle="J"}]
 
-(* val test5 = card_color (Clubs, Num 2) = Black *)
+val test5a = card_color (Clubs, Num 2) = Black
+val test5b = card_color (Spades, Jack) = Black
+val test5c = card_color (Hearts, King) = Red
+val test5d = card_color (Diamonds, Num 5) = Red
 
-(* val test6 = card_value (Clubs, Num 2) = 2 *)
+val test6a = card_value (Clubs, Num 2) = 2
+val test6b = card_value (Spades, Queen) = 10
+val test6c = card_value (Spades, King) = 10
+val test6d = card_value (Hearts, Ace) = 11
 
-(* val test7 = remove_card ([(Hearts, Ace)], (Hearts, Ace), IllegalMove) = [] *)
+val test7a = remove_card ([(Hearts, Ace)], (Hearts, Ace), IllegalMove) = [] 
+val test7b = ((remove_card ([(Spades, Num 2)], (Hearts, Ace), IllegalMove); false) handle IllegalMove => true) 
+val test7c = remove_card ([(Hearts, Ace), (Spades, Num 2)], (Hearts, Ace), IllegalMove) = [(Spades, Num 2)] 
 
-(* val test8 = all_same_color [(Hearts, Ace), (Hearts, Ace)] = true *)
+val test8a = all_same_color [(Hearts, Ace), (Hearts, Ace)] = true
+val test8b = all_same_color [(Spades, Num 3), (Hearts, Num 2)] = false
+val test8c = all_same_color [] = true
+val test8d = all_same_color [(Clubs, Ace)] = true 
 
-(* val test9 = sum_cards [(Clubs, Num 2),(Clubs, Num 2)] = 4 *)
+val test9a = sum_cards [(Clubs, Num 2),(Clubs, Num 2)] = 4
+val test9b = sum_cards [(Spades, Jack), (Clubs, Ace)] = 21
+val test9c = sum_cards [(Diamonds, Num 2), (Hearts, Queen)] = 12
 
-(* val test10 = score ([(Hearts, Num 2),(Clubs, Num 4)],10) = 4 *)
+val test10a = score ([(Hearts, Num 2),(Clubs, Num 4)], 10) = 4
+val test10b = score ([(Hearts, Num 2),(Diamonds, Num 4)], 10) = 2
+val test10c = score ([(Hearts, Ace),(Diamonds, Queen), (Hearts, Num 2)], 20) = 4
+val test10d = score ([(Hearts, Ace),(Spades, Queen), (Hearts, Num 2)], 20) = 9
 
-(* val test11 = officiate ([(Hearts, Num 2),(Clubs, Num 4)],[Draw], 15) = 6 *)
+val test11a = officiate ([(Hearts, Num 2),(Clubs, Num 4)],[Draw], 15) = 6 
 
-(* val test12 = officiate ([(Clubs,Ace),(Spades,Ace),(Clubs,Ace),(Spades,Ace)],
-                        [Draw,Draw,Draw,Draw,Draw],
+val test11b = officiate ([(Clubs,Ace),(Spades,Ace),(Clubs,Ace),(Spades,Ace)],
+                        [Draw,Draw,Draw,Draw],
                         42)
-             = 3 *)
+            = 3
 
-(* val test13 = ((officiate([(Clubs,Jack),(Spades,Num(8))],
-                         [Draw,Discard(Hearts,Jack)],
-                         42);
-               false) 
-              handle IllegalMove => true) *)
-             
+val test11c = ((officiate ([(Clubs,Jack),(Spades,Num(8))],
+                              [Draw,Discard(Hearts,Jack)],
+                              42);
+                  false) 
+                  handle IllegalMove => true)
+
+(* val test12a = score_challenge ([(Hearts, Num 2),(Clubs, Num 4)], 10) = 4
+val test12b = score_challenge ([(Hearts, Num 2),(Diamonds, Num 4)], 10) = 2
+val test12c = score_challenge ([(Hearts, Ace),(Diamonds, Queen), (Hearts, Num 2)], 20) = 4
+val test12d = score_challenge ([(Hearts, Ace),(Spades, Queen), (Hearts, Num 2)], 20) = 9 *)
              
