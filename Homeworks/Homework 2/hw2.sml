@@ -185,22 +185,12 @@ fun sum_cards cs =
 (* returns the score of given card list based on a given goal *)
 fun score (cs0, goal) =
    let
-      fun sum cs =
-         let
-            fun aux (cs, acc) =
-               case cs of
-                    [] => acc
-                  | c::cs' => aux (cs', (card_value c) + acc)
-         in
-            aux (cs0, 0)
-         end
-      
       fun prelim_score (s, g) =
          if s > g
          then 3 * (s - g)
          else g - s
 
-      val hand_sum = sum cs0
+      val hand_sum = sum_cards cs0
    in
          if all_same_color cs0
          then prelim_score (hand_sum, goal) div 2
@@ -214,22 +204,39 @@ fun score (cs0, goal) =
    cs is the cards in the draw pile,
    ms is the list of moves to be made,
    g is the goal, and hs is the card list in the player's hand *)
-
 fun officiate (cs0, ms0, g) =
    let
-      fun make_moves (cs, ms, g, hs) =
+      fun advance_game (cs, ms, g, hs) =
          let
             fun make_move (cs, m::ms', hs) =
                case m of
-                    Discard x => make_moves (cs, ms', g, (remove_card (hs, x, IllegalMove)))
+                    Discard x => advance_game (cs, ms', g, (remove_card (hs, x, IllegalMove)))
                   | Draw => case cs of
-                                [] => raise IllegalMove
-                              | c::cs' => make_moves (cs', ms', g, c::hs)
+                                [] => score (hs, g)
+                              | c::cs' => advance_game (cs', ms', g, c::hs)
          in
             case ms of
                  [] => score (hs, g)
-               | m::ms' => make_move (cs, m::ms', hs)
+               | m::ms' => if sum_cards hs > g
+                           then score (hs, g)
+                           else make_move (cs, m::ms', hs)
          end
    in
-      make_moves (cs0, ms0, g, [])
+      advance_game (cs0, ms0, g, [])
    end
+
+
+(* card list -> int *)
+(* counts the number of aces in a list *)
+fun count_aces cs0 =
+   let
+      fun aux (cs, acc) =
+         case cs of
+              [] => acc
+            | (s,r)::cs' => if r = Ace
+                            then aux (cs', 1 + acc)
+                            else aux (cs', acc)
+   in
+      aux (cs0, 0)
+   end
+
