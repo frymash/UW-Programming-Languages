@@ -130,7 +130,7 @@ fun card_value (suit, rank) =
       | _ => 10
 
 
-(* card list * card * exn *)
+(* card list * card * exn -> card list *)
 (* Returns a list that has all the elements of cs except c.
    If c is in the list more than once, remove only the first one.
    Else, if c is not in the list, raise the exception e. *)
@@ -181,15 +181,18 @@ fun sum_cards cs =
    end
 
 
+(* int * int -> int *)
+(* helper function to calculate preliminary score in score and ace_score *)
+fun prelim_score (s, g) =
+   if s > g
+   then 3 * (s - g)
+   else g - s
+
+
 (* card list * int -> int *)
 (* returns the score of given card list based on a given goal *)
 fun score (cs0, goal) =
    let
-      fun prelim_score (s, g) =
-         if s > g
-         then 3 * (s - g)
-         else g - s
-
       val hand_sum = sum_cards cs0
    in
          if all_same_color cs0
@@ -226,17 +229,53 @@ fun officiate (cs0, ms0, g) =
    end
 
 
-(* card list -> int *)
-(* counts the number of aces in a list *)
-fun count_aces cs0 =
+(* card list * int -> int *)
+(* returns the lowest possible score in a card list if Ace can take a value
+   of either 1 or 11 *)
+fun score_challenge (cs, goal) =
    let
-      fun aux (cs, acc) =
-         case cs of
-              [] => acc
-            | (s,r)::cs' => if r = Ace
-                            then aux (cs', 1 + acc)
-                            else aux (cs', acc)
-   in
-      aux (cs0, 0)
-   end
+      val original_score = score (cs, goal)
 
+      (* card list -> int *)
+      (* counts the number of aces in a list *)
+      fun count_aces cs0 =
+         let
+            fun aux (cs, acc) =
+               case cs of
+                  [] => acc
+                  | (s,r)::cs' => if r = Ace
+                                 then aux (cs', 1 + acc)
+                                 else aux (cs', acc)
+         in
+            aux (cs0, 0)
+         end
+
+      (* card list * int * int -> int *)
+      (* returns the score of a card list given a = no. of aces that take the value
+         of 1 and not 11 *)
+      fun ace_score (cs0, goal, one_point_aces) =
+         let
+            fun sum_cards_ace (cs, one_point_aces) =
+               sum_cards cs - (10 * one_point_aces)
+
+            val hand_sum = sum_cards_ace (cs0, one_point_aces)
+         in
+               if all_same_color cs0
+               then prelim_score (hand_sum, goal) div 2
+               else prelim_score (hand_sum, goal)     
+         end
+
+      (* lsf means lowest score so far *)
+      fun find_lowest_score (cs, goal, lsf, one_point_aces) =
+         case one_point_aces of
+              0 => lsf
+            | _ => let
+                     val curr = ace_score (cs, goal, one_point_aces)
+                  in
+                     if curr < lsf
+                     then find_lowest_score (cs, goal, curr , one_point_aces - 1)
+                     else find_lowest_score (cs, goal, lsf, one_point_aces - 1)
+                  end
+   in
+      find_lowest_score (cs, goal, original_score, count_aces cs)
+   end

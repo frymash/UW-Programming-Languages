@@ -93,11 +93,20 @@ val officiate_test5 = officiate ([(Hearts, Num 2),(Spades, Queen),(Spades, Num 4
 (* game starts with empty card list *)
 val officiate_test6 = officiate ([],[Draw,Draw,Draw], 5) = 2
 
+(* val ace_score_test1 = ace_score ([(Hearts, Num 2),(Clubs, Num 4)], 10, 0) = 4
+val ace_score_test2 = ace_score ([(Hearts, Ace),(Diamonds, Queen), (Hearts, Num 2)], 20, 0) = 4
+val ace_score_test3 = ace_score ([(Hearts, Ace),(Diamonds, Queen), (Hearts, Num 2)], 20, 1) = 3
+val ace_score_test4 = ace_score ([(Hearts, Ace),(Spades, Queen), (Hearts, Num 2)], 20, 0) = 9
+val ace_score_test5 = ace_score ([(Hearts, Ace),(Spades, Queen), (Hearts, Num 2)], 20, 1) = 7
+val ace_score_test6 = ace_score ([(Hearts, Ace),(Spades, Queen), (Hearts, Ace)], 40, 2) = 28
+val ace_score_test7 = ace_score ([(Hearts, Ace),(Spades, Queen), (Hearts, Ace)], 40, 1) = 18
+val ace_score_test8 = ace_score ([(Hearts, Ace),(Spades, Queen), (Hearts, Ace)], 40, 0) = 8 *) 
 
 
-(* val score_challenge_test1 = score_challenge ([(Hearts, Num 2),(Clubs, Num 4)], 10) = 4
+
+val score_challenge_test1 = score_challenge ([(Hearts, Num 2),(Clubs, Num 4)], 10) = 4
 val score_challenge_test2 = score_challenge ([(Hearts, Num 2),(Diamonds, Num 4)], 10) = 2
 val score_challenge_test3 = score_challenge ([(Hearts, Ace),(Diamonds, Queen), (Hearts, Num 2)], 20) = 3
 val score_challenge_test4 = score_challenge ([(Hearts, Ace),(Spades, Queen), (Hearts, Num 2)], 20) = 7
-val score_challenge_test5 = score_challenge ([(Hearts, Ace),(Spades, Queen), (Hearts, Ace)], 40) = 7 *)
+val score_challenge_test5 = score_challenge ([(Hearts, Ace),(Spades, Queen), (Hearts, Ace)], 40) = 8 
              
