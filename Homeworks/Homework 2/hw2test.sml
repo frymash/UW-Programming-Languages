@@ -102,11 +102,35 @@ val ace_score_test6 = ace_score ([(Hearts, Ace),(Spades, Queen), (Hearts, Ace)],
 val ace_score_test7 = ace_score ([(Hearts, Ace),(Spades, Queen), (Hearts, Ace)], 40, 1) = 18
 val ace_score_test8 = ace_score ([(Hearts, Ace),(Spades, Queen), (Hearts, Ace)], 40, 0) = 8 *) 
 
-
-
 val score_challenge_test1 = score_challenge ([(Hearts, Num 2),(Clubs, Num 4)], 10) = 4
 val score_challenge_test2 = score_challenge ([(Hearts, Num 2),(Diamonds, Num 4)], 10) = 2
 val score_challenge_test3 = score_challenge ([(Hearts, Ace),(Diamonds, Queen), (Hearts, Num 2)], 20) = 3
 val score_challenge_test4 = score_challenge ([(Hearts, Ace),(Spades, Queen), (Hearts, Num 2)], 20) = 7
 val score_challenge_test5 = score_challenge ([(Hearts, Ace),(Spades, Queen), (Hearts, Ace)], 40) = 8 
-             
+
+val officiate_challenge_test1 = officiate_challenge ([(Hearts, Num 2),(Clubs, Num 4)],[Draw], 15) = 6 
+val officiate_challenge_test2 = officiate_challenge ([(Clubs,Ace),(Spades,Ace),(Clubs,Ace),(Spades,Ace)],
+                                           [Draw,Draw,Draw,Draw],
+                                           42)
+                              = 3
+val officiate_challenge_test3 = officiate_challenge ([(Clubs, Ace), (Diamonds, Ace), (Clubs, Ace)], [Draw,Draw,Draw], 30)
+                              = 7
+val officiate_challenge_test4 = ((officiate_challenge ([(Clubs,Jack),(Spades,Num(8))],
+                                   [Draw,Discard(Hearts,Jack)],
+                                   42);
+                                  false) 
+                              handle IllegalMove => true)
+val officiate_challenge_test5 = officiate_challenge ([],[Draw,Draw,Draw], 5) = 2 
+
+
+val careful_player_test1 = careful_player ([], 5) = []
+(* val careful_player_test2 = careful_player ([], 10) handle DrawError => true *)
+val careful_player_test3 = careful_player ([(Hearts, Num 2),(Clubs, Num 4)], 10) = []
+
+(* Value of held cards never exceed the goal. In test 4, the 1st draw brings the value of the held cards
+   up to 11. If a 2nd draw is made, the value of the held cards would become 21. Hence, no further
+   draws should be made. *)
+val careful_player_test4 = careful_player ([(Hearts, Ace),(Diamonds, Queen), (Hearts, Num 2)], 20)
+                         = [Draw]
+
+(* val_careful_player_test5 *) 

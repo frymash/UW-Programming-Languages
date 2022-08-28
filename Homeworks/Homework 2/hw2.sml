@@ -1,13 +1,9 @@
-(* Dan Grossman, Coursera PL, HW2 Provided Code *)
-(* Edited by ozervesh on Thursday, 25 August 2022 for submission *)
-
-(* if you use this function to compare two strings (returns true if the same
-   string), then you avoid several of the functions in problem 1 having
-   polymorphic types that may be confusing *)
+(* Provided function *)
 fun same_string(s1 : string, s2 : string) =
     s1 = s2
 
-(* put your solutions for problem 1 here *)
+
+(* Code for problem 1 begins after this line *)
 
 
 (* string * string list -> string list option *)
@@ -101,6 +97,9 @@ fun similar_names (subs, {first=f, middle=m, last=z}) =
    end *)
    
 
+(* Code for problem 2 begins after this line *)
+
+
 datatype suit = Clubs | Diamonds | Hearts | Spades
 datatype rank = Jack | Queen | King | Ace | Num of int 
 type card = suit * rank
@@ -109,8 +108,8 @@ datatype color = Red | Black
 datatype move = Discard of card | Draw 
 
 exception IllegalMove
+exception DrawError
 
-(* put your solutions for problem 2 here *)
 
 (* card -> color *)
 (* Returns the color of a given card *)
@@ -189,44 +188,55 @@ fun prelim_score (s, g) =
    else g - s
 
 
+(* card list * int * int -> int *)
+(* returns the score of a given card list based on a goal
+   and the sum of the card list *)
+fun score_general (cs, goal, hand_sum) =
+   if all_same_color cs
+   then prelim_score (hand_sum, goal) div 2
+   else prelim_score (hand_sum, goal)    
+
+
 (* card list * int -> int *)
 (* returns the score of given card list based on a given goal *)
-fun score (cs0, goal) =
-   let
-      val hand_sum = sum_cards cs0
-   in
-         if all_same_color cs0
-         then prelim_score (hand_sum, goal) div 2
-         else prelim_score (hand_sum, goal)     
-   end
+fun score (cs, goal) =
+   score_general (cs, goal, sum_cards cs)
 
 
-(* card list * move list * int -> int *)
+(* card list * move list * int * (card list * int -> int) -> int *)
 (* Runs a solitaire game and returns the final score.
    The player begins with an empty hand [].
    cs is the cards in the draw pile,
    ms is the list of moves to be made,
-   g is the goal, and hs is the card list in the player's hand *)
-fun officiate (cs0, ms0, g) =
+   g is the goal, and hs is the card list in the player's hand
+   f is the function that generates a score for the hand *)
+fun officiate_general (cs0, ms0, g, f) =
    let
-      fun advance_game (cs, ms, g, hs) =
+      fun advance_game (cs, ms, hs) =
          let
             fun make_move (cs, m::ms', hs) =
                case m of
-                    Discard x => advance_game (cs, ms', g, (remove_card (hs, x, IllegalMove)))
-                  | Draw => case cs of
-                                [] => score (hs, g)
-                              | c::cs' => advance_game (cs', ms', g, c::hs)
+                    Discard x => advance_game (cs, ms', (remove_card (hs, x, IllegalMove)))
+                  | _ => case cs of
+                             [] => f (hs, g)
+                           | c::cs' => advance_game (cs', ms', c::hs)
          in
             case ms of
-                 [] => score (hs, g)
+                 [] => f (hs, g)
                | m::ms' => if sum_cards hs > g
-                           then score (hs, g)
+                           then f (hs, g)
                            else make_move (cs, m::ms', hs)
          end
    in
-      advance_game (cs0, ms0, g, [])
+      advance_game (cs0, ms0, [])
    end
+
+
+(* card list * move list * int -> int *)
+(* returns the score of a solitaire game based on a draw pile (card list),
+   move list, a goal, and the standard score function *)
+fun officiate (cs, ms, g) =
+   officiate_general (cs, ms, g, score)
 
 
 (* card list * int -> int *)
@@ -257,15 +267,14 @@ fun score_challenge (cs, goal) =
          let
             fun sum_cards_ace (cs, one_point_aces) =
                sum_cards cs - (10 * one_point_aces)
-
-            val hand_sum = sum_cards_ace (cs0, one_point_aces)
          in
-               if all_same_color cs0
-               then prelim_score (hand_sum, goal) div 2
-               else prelim_score (hand_sum, goal)     
+            score_general (cs0, goal, sum_cards_ace (cs0, one_point_aces))   
          end
 
-      (* lsf means lowest score so far *)
+      (* card list * int * int * int -> int *)
+      (* returns the lowest possible score based on the card list, goal,
+         lowest score so far (lsf), and the number of 1-point aces
+         in a card list *)
       fun find_lowest_score (cs, goal, lsf, one_point_aces) =
          case one_point_aces of
               0 => lsf
@@ -278,4 +287,46 @@ fun score_challenge (cs, goal) =
                   end
    in
       find_lowest_score (cs, goal, original_score, count_aces cs)
+   end
+
+
+(* card list * move list * int -> int *)
+(* returns the score of a solitaire game based on a draw pile (card list),
+   move list, a goal, and the challenge score function *)
+fun officiate_challenge (cs, ms, g) =
+   officiate_general (cs, ms, g, score_challenge)
+
+
+(* card list * int -> move list *)
+(* generates a move list such that whenever officiate (cs, ms, g) is called,
+   the move list must have the following behaviour: 
+   1. The value of the held cards never exceeds the goal.
+   2. A card is drawn whenever the goal is more than 10 greater than the value of the held cards. As a
+      detail, you should (attempt to) draw, even if no cards remain in the card-list.
+   3. If a score of 0 is reached, there must be no more moves.
+   4. If it is possible to reach a score of 0 by discarding a card followed by drawing a card,
+      it must be done *)
+fun careful_player (cs, g) =
+   let
+      fun aux (cs, g, hs, acc) =
+         let
+            val held_value = sum_cards hs
+         in
+            case (cs, hs) of
+                 ([], _) => acc
+               | (c::cs', []) => if g - held_value > 10
+                                 then aux (cs', g, (c::hs), acc @ [Draw])
+                                 else acc
+               | (c::cs', h::hs') => if held_value + card_value c > g orelse score ((h::hs'), g) = 0
+                                     then acc
+                                     else
+                                       if score (c::hs', g) = 0
+                                       then aux (cs', g, (c::hs'), acc @ [Discard h, Draw]) 
+                                       else
+                                          if g - held_value > 10
+                                          then aux (cs', g, (c::h::hs'), acc @ [Draw])
+                                          else acc
+         end
+   in
+      aux (cs, g, [], [])
    end
