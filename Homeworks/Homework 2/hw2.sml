@@ -203,14 +203,15 @@ fun score (cs, goal) =
    score_general (cs, goal, sum_cards cs)
 
 
-(* card list * move list * int * (card list * int -> int) -> int *)
+(* card list * move list * int -> int *)
 (* Runs a solitaire game and returns the final score.
    The player begins with an empty hand [].
    cs is the cards in the draw pile,
    ms is the list of moves to be made,
    g is the goal, and hs is the card list in the player's hand
-   f is the function that generates a score for the hand *)
-fun officiate_general (cs0, ms0, g, f) =
+   f1 is the function that generates a score for the hand
+   f2 is the function that sums the player's hand *)
+fun officiate_general (cs0, ms0, g, f1, f2) =
    let
       fun advance_game (cs, ms, hs) =
          let
@@ -218,13 +219,13 @@ fun officiate_general (cs0, ms0, g, f) =
                case m of
                     Discard x => advance_game (cs, ms', (remove_card (hs, x, IllegalMove)))
                   | _ => case cs of
-                             [] => f (hs, g)
+                             [] => f1 (hs, g)
                            | c::cs' => advance_game (cs', ms', c::hs)
          in
             case ms of
-                 [] => f (hs, g)
-               | m::ms' => if sum_cards hs > g
-                           then f (hs, g)
+                 [] => f1 (hs, g)
+               | m::ms' => if f2 hs > g
+                           then score (hs, g)
                            else make_move (cs, m::ms', hs)
          end
    in
@@ -232,11 +233,27 @@ fun officiate_general (cs0, ms0, g, f) =
    end
 
 
-(* card list * move list * int -> int *)
-(* returns the score of a solitaire game based on a draw pile (card list),
-   move list, a goal, and the standard score function *)
 fun officiate (cs, ms, g) =
-   officiate_general (cs, ms, g, score)
+   officiate_general (cs, ms, g, score, sum_cards)
+
+
+(* card list -> int *)
+(* counts the number of aces in a list *)
+fun count_aces cs0 =
+   let
+      fun aux (cs, acc) =
+         case cs of
+            [] => acc
+            | (s,r)::cs' => if r = Ace
+                           then aux (cs', 1 + acc)
+                           else aux (cs', acc)
+   in
+      aux (cs0, 0)
+   end
+
+
+fun sum_cards_ace cs =
+   sum_cards cs - (10 * count_aces cs)
 
 
 (* card list * int -> int *)
@@ -246,30 +263,11 @@ fun score_challenge (cs, goal) =
    let
       val original_score = score (cs, goal)
 
-      (* card list -> int *)
-      (* counts the number of aces in a list *)
-      fun count_aces cs0 =
-         let
-            fun aux (cs, acc) =
-               case cs of
-                  [] => acc
-                  | (s,r)::cs' => if r = Ace
-                                 then aux (cs', 1 + acc)
-                                 else aux (cs', acc)
-         in
-            aux (cs0, 0)
-         end
-
       (* card list * int * int -> int *)
       (* returns the score of a card list given a = no. of aces that take the value
          of 1 and not 11 *)
-      fun ace_score (cs0, goal, one_point_aces) =
-         let
-            fun sum_cards_ace (cs, one_point_aces) =
-               sum_cards cs - (10 * one_point_aces)
-         in
-            score_general (cs0, goal, sum_cards_ace (cs0, one_point_aces))   
-         end
+      fun ace_score (cs, goal, one_point_aces) =
+         score_general (cs, goal, sum_cards_ace cs)   
 
       (* card list * int * int * int -> int *)
       (* returns the lowest possible score based on the card list, goal,
@@ -294,7 +292,7 @@ fun score_challenge (cs, goal) =
 (* returns the score of a solitaire game based on a draw pile (card list),
    move list, a goal, and the challenge score function *)
 fun officiate_challenge (cs, ms, g) =
-   officiate_general (cs, ms, g, score_challenge)
+   officiate_general (cs, ms, g, score_challenge, sum_cards_ace)
 
 
 (* card list * int -> move list *)
@@ -312,20 +310,21 @@ fun careful_player (cs, g) =
          let
             val held_value = sum_cards hs
          in
-            case (cs, hs) of
-                 ([], _) => acc
-               | (c::cs', []) => if g - held_value > 10
-                                 then aux (cs', g, (c::hs), acc @ [Draw])
-                                 else acc
-               | (c::cs', h::hs') => if held_value + card_value c > g orelse score ((h::hs'), g) = 0
-                                     then acc
-                                     else
-                                       if score (c::hs', g) = 0
-                                       then aux (cs', g, (c::hs'), acc @ [Discard h, Draw]) 
-                                       else
-                                          if g - held_value > 10
-                                          then aux (cs', g, (c::h::hs'), acc @ [Draw])
-                                          else acc
+            case cs of
+                 [] => if g - held_value > 10
+                       then acc @ [Draw]
+                       else acc
+               | c::cs' => if (g - held_value > 10) andalso (held_value + card_value c <= g)
+                           then aux (cs', g, (c::hs), acc @ [Draw])
+                           else
+                              case hs of
+                                   h::hs' => if score ((h::hs'), g) = 0
+                                             then acc
+                                             else
+                                                if score (c::hs', g) = 0
+                                                then aux (cs', g, (c::hs'), acc @ [Discard h, Draw]) 
+                                                else acc
+                                 | _ => acc
          end
    in
       aux (cs, g, [], [])

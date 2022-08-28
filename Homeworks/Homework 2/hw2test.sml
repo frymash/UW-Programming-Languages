@@ -67,6 +67,8 @@ val score_test1 = score ([(Hearts, Num 2),(Clubs, Num 4)], 10) = 4
 val score_test2 = score ([(Hearts, Num 2),(Diamonds, Num 4)], 10) = 2
 val score_test3 = score ([(Hearts, Ace),(Diamonds, Queen), (Hearts, Num 2)], 20) = 4
 val score_test4 = score ([(Hearts, Ace),(Spades, Queen), (Hearts, Num 2)], 20) = 9
+val score_test5 = score ([(Hearts, Queen)], 11) = 0
+val score_test6 = score ([], 10) = 5
 
 val officiate_test1 = officiate ([(Hearts, Num 2),(Clubs, Num 4)],[Draw], 15) = 6 
 
@@ -114,23 +116,41 @@ val officiate_challenge_test2 = officiate_challenge ([(Clubs,Ace),(Spades,Ace),(
                                            42)
                               = 3
 val officiate_challenge_test3 = officiate_challenge ([(Clubs, Ace), (Diamonds, Ace), (Clubs, Ace)], [Draw,Draw,Draw], 30)
-                              = 7
+                              = 9
 val officiate_challenge_test4 = ((officiate_challenge ([(Clubs,Jack),(Spades,Num(8))],
                                    [Draw,Discard(Hearts,Jack)],
                                    42);
                                   false) 
                               handle IllegalMove => true)
-val officiate_challenge_test5 = officiate_challenge ([],[Draw,Draw,Draw], 5) = 2 
+val officiate_challenge_test5 = officiate_challenge ([],[Draw,Draw,Draw], 5) = 2
+val officiate_challenge_test6 = officiate_challenge ([(Clubs,Ace),(Spades,Ace),(Clubs,Ace),(Spades,Ace)],
+                                           [Draw,Draw,Draw,Draw],
+                                           4)
+                              = 0 (* or is it 1? *)
 
 
 val careful_player_test1 = careful_player ([], 5) = []
-(* val careful_player_test2 = careful_player ([], 10) handle DrawError => true *)
+val careful_player_test2 = careful_player ([], 11) = [Draw]
 val careful_player_test3 = careful_player ([(Hearts, Num 2),(Clubs, Num 4)], 10) = []
+val careful_player_test4 = careful_player ([(Hearts, Num 2),(Clubs, Num 4)], 11) = [Draw]
+val careful_player_test5 = careful_player ([(Hearts, Num 2),(Clubs, Num 4)], 13) 
+                         = [Draw, Draw]
+val careful_player_test6 = careful_player ([(Hearts, Num 2),(Clubs, Num 4)], 17) 
+                         = [Draw, Draw, Draw]
+val careful_player_test7 = careful_player ([(Spades, Num 1), (Hearts, Ace)], 12)
+                         = [Draw, Draw]
 
 (* Value of held cards never exceed the goal. In test 4, the 1st draw brings the value of the held cards
    up to 11. If a 2nd draw is made, the value of the held cards would become 21. Hence, no further
    draws should be made. *)
-val careful_player_test4 = careful_player ([(Hearts, Ace),(Diamonds, Queen), (Hearts, Num 2)], 20)
+val careful_player_test8 = careful_player ([(Hearts, Ace),(Diamonds, Queen), (Hearts, Num 2)], 20)
                          = [Draw]
 
-(* val_careful_player_test5 *) 
+(* Edge case: player has a score of 0 after the 1st draw and could
+   technically discard the 1st card and draw the 2nd card to obtain a 0 score again *)
+val careful_player_test9 = careful_player ([(Hearts, Queen), (Spades, Ace)], 11)
+                         = [Draw]
+
+(* Player needs to discard a card and draw another card to obtain a 0 score *)
+val careful_player_test10 = careful_player ([(Hearts, Ace), (Spades, Ace), (Clubs, Queen), (Diamonds, Ace)], 33)
+                          = [Draw, Draw, Draw, Discard (Clubs, Queen), Draw]
