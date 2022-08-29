@@ -209,7 +209,7 @@ fun score (cs, goal) =
    cs is the cards in the draw pile,
    ms is the list of moves to be made,
    g is the goal, and hs is the card list in the player's hand
-   f1 is the function that generates a score for the hand
+   f1 is the function computing the score for the hand
    f2 is the function that sums the player's hand *)
 fun officiate_general (cs0, ms0, g, f1, f2) =
    let
@@ -225,7 +225,7 @@ fun officiate_general (cs0, ms0, g, f1, f2) =
             case ms of
                  [] => f1 (hs, g)
                | m::ms' => if f2 hs > g
-                           then score (hs, g)
+                           then f1 (hs, g)
                            else make_move (cs, m::ms', hs)
          end
    in
@@ -233,6 +233,11 @@ fun officiate_general (cs0, ms0, g, f1, f2) =
    end
 
 
+(* card list * move list * int -> int *)
+(* returns the score of a solitaire game given
+   - an initial draw pile (cs)
+   - a list of moves (ms) and
+   - a point goal (g) *)
 fun officiate (cs, ms, g) =
    officiate_general (cs, ms, g, score, sum_cards)
 
@@ -252,10 +257,6 @@ fun count_aces cs0 =
    end
 
 
-fun sum_cards_ace cs =
-   sum_cards cs - (10 * count_aces cs)
-
-
 (* card list * int -> int *)
 (* returns the lowest possible score in a card list if Ace can take a value
    of either 1 or 11 *)
@@ -263,11 +264,17 @@ fun score_challenge (cs, goal) =
    let
       val original_score = score (cs, goal)
 
+      (* card list * int -> int *)
+      (* returns the score of a given card list where one_point_aces
+         = the number of aces in the hand with a value of 1 instead of 11 *)
+      fun sum_cards_ace (cs, one_point_aces) =
+         sum_cards cs - (10 * one_point_aces)
+
       (* card list * int * int -> int *)
       (* returns the score of a card list given a = no. of aces that take the value
          of 1 and not 11 *)
       fun ace_score (cs, goal, one_point_aces) =
-         score_general (cs, goal, sum_cards_ace cs)   
+         score_general (cs, goal, sum_cards_ace (cs, one_point_aces))   
 
       (* card list * int * int * int -> int *)
       (* returns the lowest possible score based on the card list, goal,
@@ -278,21 +285,30 @@ fun score_challenge (cs, goal) =
               0 => lsf
             | _ => let
                      val curr = ace_score (cs, goal, one_point_aces)
-                  in
+                   in
                      if curr < lsf
                      then find_lowest_score (cs, goal, curr , one_point_aces - 1)
                      else find_lowest_score (cs, goal, lsf, one_point_aces - 1)
-                  end
+                   end
    in
       find_lowest_score (cs, goal, original_score, count_aces cs)
    end
 
 
 (* card list * move list * int -> int *)
-(* returns the score of a solitaire game based on a draw pile (card list),
-   move list, a goal, and the challenge score function *)
+(* card list * move list * int -> int *)
+(* returns the best score of a solitaire game 
+   where Aces can take a value of either 1 or 11 given
+   - an initial draw pile (cs)
+   - a list of moves (ms) and
+   - a point goal (g) *)
 fun officiate_challenge (cs, ms, g) =
-   officiate_general (cs, ms, g, score_challenge, sum_cards_ace)
+   let
+      fun minimum_sum_cards_ace cs =
+         sum_cards cs - (10 * count_aces cs)
+   in
+      officiate_general (cs, ms, g, score_challenge, minimum_sum_cards_ace)
+   end
 
 
 (* card list * int -> move list *)

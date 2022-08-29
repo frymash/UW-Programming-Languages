@@ -116,7 +116,7 @@ val officiate_challenge_test2 = officiate_challenge ([(Clubs,Ace),(Spades,Ace),(
                                            42)
                               = 3
 val officiate_challenge_test3 = officiate_challenge ([(Clubs, Ace), (Diamonds, Ace), (Clubs, Ace)], [Draw,Draw,Draw], 30)
-                              = 9
+                              = 7
 val officiate_challenge_test4 = ((officiate_challenge ([(Clubs,Jack),(Spades,Num(8))],
                                    [Draw,Discard(Hearts,Jack)],
                                    42);
