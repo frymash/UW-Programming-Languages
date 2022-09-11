@@ -7,3 +7,11 @@ fun map2 (xs, f) =
 	case xs of
 		  [] => []
 		| x::xs' => f x :: map2 (xs', f)
+
+fun filter2 (f, xs) =
+	case xs of
+		  [] => []
+		| x::xs' => if f x
+					then x :: filter2 (f, xs')
+					else filter2 (f, xs')
+					
