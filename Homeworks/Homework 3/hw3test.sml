@@ -1,4 +1,4 @@
-use "hw3provided.sml";
+use "hw3.sml";
 
 val only_capitals_test1 = only_capitals ["A","B","C"] = ["A","B","C"]
 val only_capitals_test2 = only_capitals ["a", "B", "c"] = ["B"]
@@ -26,8 +26,9 @@ val first_answer_test1 = first_answer (fn x => if x > 3 then SOME x else NONE) [
 
 val all_answers_test1 = all_answers (fn x => if x = 1 then SOME [x] else NONE) [2,3,4,5,6,7] = NONE
 val all_answers_test2 = all_answers (fn x => if x = 1 then SOME [x] else NONE) [] = SOME []
-val all_answers_test3 = all_answers (fn x => if x = 1 then SOME [x] else NONE) [1,2,3,4,5,6,7] = SOME [1]
+val all_answers_test3 = all_answers (fn x => if x = 1 then SOME [x] else NONE) [1,2,3,4,5,6,7] = NONE
 val all_answers_test4 = all_answers (fn x => if x = 1 then SOME [x] else NONE) [1,1,1,1] = SOME [1,1,1,1]
+val all_answers_test5 = all_answers (fn x => if x = 1 then SOME [x] else NONE) [2,1,1,1] = NONE
 
 val count_wildcards_test1 = count_wildcards Wildcard = 1
 val count_wildcards_test2 = count_wildcards (TupleP [Wildcard, Wildcard, Wildcard]) = 3
@@ -43,9 +44,26 @@ val count_some_var_test3 = count_some_var ("x", ConstructorP ("x", Wildcard)) = 
 val count_some_var_test4 = count_some_var ("x", ConstructorP ("x", Variable "x")) = 1
 
 val check_pat_test1 = check_pat (Variable("x")) = true
+val check_pat_test2 = check_pat (TupleP [Variable "x", Variable "x"]) = false
+val check_pat_test3 = check_pat (TupleP [Variable "x", Variable "s"]) = true
 
 val match_test1 = match (Const(1), UnitP) = NONE
 val match_test2 = match (Unit, UnitP) = SOME []
-val match_test2 = match (Const 3, ConstP 3) = SOME []
+val match_test3 = match (Const 3, ConstP 3) = SOME []
+val match_test4 = match (Constructor ("SOME", Const 1), ConstructorP ("SOM", Variable "a")) = NONE
+val match_test5 = match (Tuple [Const 5, Constructor ("SOME", Const 1)],
+                         TupleP [ConstP 5, ConstructorP ("SOME", Variable "a")])
+                = SOME [("a", Const 1)]
+val match_test6 = match (Tuple [Const 5, Constructor ("SOME", Const 1)],
+                         TupleP [Variable "b", ConstructorP ("SOME", Variable "a")])
+                = SOME [("b", Const 5),("a", Const 1)]
+val match_test7 = match (Tuple [Const 5, Constructor ("foo", Unit)], TupleP [Wildcard, Wildcard])
+                = SOME []
+val match_test8 = match (Tuple [Const 5, Constructor ("foo", Unit)], TupleP [Wildcard])
+                = SOME []
+val match_test9 = match (Tuple [Const 5, Constructor ("foo", Unit)], TupleP [ConstP 5, UnitP])
+                = NONE
 
-(* val test12 = first_match Unit [UnitP] = SOME [] *)
+val first_match_test1 = first_match Unit [UnitP] = SOME []
+val first_match_test2 = first_match (Const 5) [TupleP [ConstP 5, UnitP]] = NONE
+val first_match_test3 = first_match (Const 5) [Variable "a", TupleP [Variable "a", UnitP]] = SOME [("a", Const 5)]

@@ -113,16 +113,14 @@ fun all_answers f xs =
    let
       fun aux f xs acc =
          case xs of
-              [] => acc
+              [] => SOME acc
             | x::xs' => case f x of
-                             NONE => aux f xs' acc
+                             NONE => NONE
                            | SOME lst => aux f xs' (acc @ lst)
    in
       case xs of
            [] => SOME []
-         | x::xs' => case (aux f xs []) of
-                          [] => NONE
-                        | y::ys' => SOME (y::ys')
+         | x::xs' => aux f xs []
    end
 
 
@@ -163,7 +161,7 @@ fun check_pat p =
       fun strings_in p =
          case p of
               Variable s => [s]
-            | TupleP ps => foldl (fn (p,acc) => acc @ strings_in p) [] ps
+            | TupleP ps => foldl (fn (p,acc) => acc @ (strings_in p)) [] ps
             | ConstructorP (_,p) => strings_in p
             | _ => []
 
@@ -172,26 +170,36 @@ fun check_pat p =
             with a hashmap/dictionary *)
          case xs of
               [] => true
-            | x::xs' => (List.exists (fn y => x=y) (x::xs')) andalso all_distinct xs'
+            | x::xs' => not (List.exists (fn y => x=y) xs') andalso all_distinct xs'
    in
       (all_distinct o strings_in) p
    end
 
 
-(* valu * pattern -> (string * valu) list option *)
-(* returns NONE if the pattern does not match and SOME lst
-   where lst is the list of bindings if it does.
+(* (valu * pattern) -> (string * valu) list option *)
+(* returns NONE if valu does not match the pattern
+   and SOME lst where lst is the list of bindings if it does.
    Note that if the value matches but the pattern
    has no patterns of the form Variable s, then the result
    is SOME [] *)
-fun match v p =
+fun match (v,p) =
    case (v,p) of
-        (Constructor (s1,v1), ConstructorP (s2,p1) ) => match v1 p1
-      | (Tuple vs, TupleP ps) => SOME [...]
-      | (Const i1, ConstP i2) => if i1=i2 then SOME [] else NONE
+        (Constructor (s1,v1), ConstructorP (s2,p1)) => if s1=s2
+                                                       then match (v1, p1)
+                                                       else NONE
+      | (Tuple vs, TupleP ps) => all_answers match (ListPair.zip (vs, ps))
+      | (Const i1, ConstP i2) => if i1=i2
+                                 then SOME []
+                                 else NONE
       | (v1, Variable s) => SOME [(s, v1)]
       | (Unit, UnitP) => SOME []
       | (_, Wildcard) => SOME []
       | (_, _) => NONE
 
 
+(* valu -> pattern list -> (string * valu) list option *)
+(* returns NONE if no pattern in the list matches or SOME lst where
+   lst is the list of bindings for the first pattern in the list that matches *)
+fun first_match v ps =
+   SOME (first_answer (fn p => match (v,p)) ps)
+   handle NoAnswer => NONE
