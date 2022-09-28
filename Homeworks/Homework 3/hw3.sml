@@ -187,7 +187,9 @@ fun match (v,p) =
         (Constructor (s1,v1), ConstructorP (s2,p1)) => if s1=s2
                                                        then match (v1, p1)
                                                        else NONE
-      | (Tuple vs, TupleP ps) => all_answers match (ListPair.zip (vs, ps))
+      | (Tuple vs, TupleP ps) => if List.length vs = List.length ps
+                                 then all_answers match (ListPair.zip (vs, ps))
+                                 else NONE
       | (Const i1, ConstP i2) => if i1=i2
                                  then SOME []
                                  else NONE
@@ -203,3 +205,11 @@ fun match (v,p) =
 fun first_match v ps =
    SOME (first_answer (fn p => match (v,p)) ps)
    handle NoAnswer => NONE
+
+
+(* ((string * string * typ) list) * (pattern list) -> typ option *)
+(* "type checks" a pattern list. 
+   Returns SOME t if there exists some typ (t) that
+   all the patterns in the list can have.
+   Else, return NONE *)
+fun typecheck_patterns cs ps = NONE

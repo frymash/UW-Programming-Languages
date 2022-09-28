@@ -60,8 +60,11 @@ val match_test6 = match (Tuple [Const 5, Constructor ("SOME", Const 1)],
 val match_test7 = match (Tuple [Const 5, Constructor ("foo", Unit)], TupleP [Wildcard, Wildcard])
                 = SOME []
 val match_test8 = match (Tuple [Const 5, Constructor ("foo", Unit)], TupleP [Wildcard])
-                = SOME []
+                = NONE
 val match_test9 = match (Tuple [Const 5, Constructor ("foo", Unit)], TupleP [ConstP 5, UnitP])
+                = NONE
+val match_test10 = match (Tuple [Const 17, Unit, Const 4, Constructor ("egg",Const 4),Constructor ("egg",Constructor ("egg",Const 4))],
+                    TupleP [Wildcard,Wildcard])
                 = NONE
 
 val first_match_test1 = first_match Unit [UnitP] = SOME []
