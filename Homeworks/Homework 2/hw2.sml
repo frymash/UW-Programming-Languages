@@ -180,21 +180,22 @@ fun sum_cards cs =
    end
 
 
-(* int * int -> int *)
-(* helper function to calculate preliminary score in score and ace_score *)
-fun prelim_score (s, g) =
-   if s > g
-   then 3 * (s - g)
-   else g - s
-
-
 (* card list * int * int -> int *)
 (* returns the score of a given card list based on a goal
    and the sum of the card list *)
 fun score_general (cs, goal, hand_sum) =
-   if all_same_color cs
-   then prelim_score (hand_sum, goal) div 2
-   else prelim_score (hand_sum, goal)    
+   let
+      (* int * int -> int *)
+      (* helper function to calculate preliminary score in score and ace_score *)
+      fun prelim_score (s, g) =
+         if s > g
+         then 3 * (s - g)
+         else g - s
+   in
+      if all_same_color cs
+      then prelim_score (hand_sum, goal) div 2
+      else prelim_score (hand_sum, goal)  
+   end  
 
 
 (* card list * int -> int *)
@@ -215,18 +216,17 @@ fun officiate_general (cs0, ms0, g, f1, f2) =
    let
       fun advance_game (cs, ms, hs) =
          let
-            fun make_move (cs, m::ms', hs) =
-               case m of
-                    Discard x => advance_game (cs, ms', (remove_card (hs, x, IllegalMove)))
-                  | _ => case cs of
-                             [] => f1 (hs, g)
-                           | c::cs' => advance_game (cs', ms', c::hs)
+            fun make_move (cs, m, ms') =
+               case (cs, m) of
+                    (_, Discard x) => advance_game (cs, ms', (remove_card (hs, x, IllegalMove)))
+                  | ([], _) => f1 (hs, g)
+                  | (c::cs', _) => advance_game (cs', ms', c::hs)
          in
             case ms of
                  [] => f1 (hs, g)
                | m::ms' => if f2 hs > g
                            then f1 (hs, g)
-                           else make_move (cs, m::ms', hs)
+                           else make_move (cs, m, ms')
          end
    in
       advance_game (cs0, ms0, [])
