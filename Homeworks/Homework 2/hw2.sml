@@ -10,7 +10,7 @@ fun same_string(s1 : string, s2 : string) =
 (* Returns NONE if the input string is not in the input string list,
    else return SOME lst where lst is identical to the argument list except the string
    is not in it.*)
-fun all_except_option (s, xs0) =
+(* fun all_except_option (s, xs0) =
    let
      fun all_except xs =
          case xs of  
@@ -24,7 +24,18 @@ fun all_except_option (s, xs0) =
       if filtered_list = xs0
       then NONE
       else SOME filtered_list
-   end
+   end *)
+
+(* Alternative implementation suggested by Arnaud Lechevallier: *)
+fun all_except_option (s, xs) = 
+   case xs of 
+        [] => NONE 
+      | x::xs' => if same_string (s, x) 
+                  then SOME xs'
+                  else 
+                     case all_except_option(s, xs') of
+                          NONE => NONE 
+                        | SOME y => SOME (x::y)
 
 
 (* string list list * string -> string list *)
@@ -51,6 +62,19 @@ fun get_substitutions2 (subs0, s) =
    in
       aux (subs0, [])
    end
+
+
+(* Alternative version with function matching suggested by Arnaud Lechevallier: *)
+(* fun get_substitutions2 (s_list, s) = 
+   let
+      fun aux ([], acc) = acc 
+        | aux (x::xs, acc) =
+            case all_except_option (s, x) of
+                  NONE => aux (xs, acc) 
+               |  SOME ys => aux (xs, acc @ ys)
+   in
+      aux (s_list, [])
+   end *)
 
 
 (* string list list * {first : string, middle : string, last : string} 

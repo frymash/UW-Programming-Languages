@@ -43,8 +43,10 @@ datatype typ = Anything
    the strings in the argument that start with an uppercase letter *)
 (* note: implementation of List.filter is curried, arguments cannot
    be passed as a tuple *)
-fun only_capitals xs =
-    List.filter (fn x => Char.isUpper(String.sub (x,0))) xs
+(* fun only_capitals xs =
+    List.filter (fn x => Char.isUpper(String.sub (x,0))) xs *)
+
+val only_capitals = List.filter (fn x => Char.isUpper(String.sub (x,0)))
 
 
 (* string list -> string *)
@@ -52,16 +54,20 @@ fun only_capitals xs =
    If the list is empty, return "".
    In the case of a tie, return the string closest
    to the beginning of the list *)
-fun longest_string1 xs =
-    foldl (fn (i,j) => if String.size i > String.size j then i else j) "" xs
+(* fun longest_string1 xs =
+    foldl (fn (i,j) => if String.size i > String.size j then i else j) "" xs *)
+
+val longest_string1 = foldl (fn (i,j) => if String.size i > String.size j then i else j) ""
 
 
 (* string list -> string *)
 (* same functionality as longest_string1 except when
    in the case of a tie, return the string closest
    to the end of the list *)
-fun longest_string2 xs =
-    foldl (fn (i,j) => if String.size i >= String.size j then i else j) "" xs
+(* fun longest_string2 xs =
+    foldl (fn (i,j) => if String.size i >= String.size j then i else j) "" xs *)
+
+val longest_string2 = foldl (fn (i,j) => if String.size i >= String.size j then i else j) ""
 
 
 (* (int * int -> bool) -> string list -> string *)
@@ -111,23 +117,23 @@ fun first_answer f xs = case xs of
    all_answers is SOME lst where lst is lst1, lst2, ..., lstn appended together (order doesn’t matter) *)
 fun all_answers f xs =
    let
-      fun aux f xs acc =
+      fun aux xs acc =
          case xs of
               [] => SOME acc
             | x::xs' => case f x of
                              NONE => NONE
-                           | SOME lst => aux f xs' (acc @ lst)
+                           | SOME lst => aux xs' (acc @ lst)
    in
-      case xs of
-           [] => SOME []
-         | x::xs' => aux f xs []
+      aux xs []
    end
 
 
 (* pattern -> int *)
 (* counts the number of wildcards in a pattern *)
-fun count_wildcards p =
-   g (fn x => 1) (fn y => 0) p
+val count_wildcards = g (fn x => 1) (fn y => 0)
+
+(* fun count_wildcards p =
+   g (fn x => 1) (fn y => 0) p *)
 
 (* fun count_wildcards p =
    case p of
@@ -141,8 +147,9 @@ fun count_wildcards p =
 (* returns the number of Wildcard patterns it contains
    plus the sum of the string lengths of all the variables
    in the variable patterns it contains. *)
-fun count_wild_and_variable_lengths p =
-   (count_wildcards p) + (g (fn x => 0) (fn y => String.size y) p)
+val count_wild_and_variable_lengths = g (fn () => 1) String.size
+(* fun count_wild_and_variable_lengths p =
+   (count_wildcards p) + (g (fn x => 0) (fn y => String.size y) p) *)
 
 
 (* string * pattern -> int *)
@@ -156,7 +163,7 @@ fun count_some_var (s,p) =
 (* pattern -> bool *)
 (* returns true if and only if all the variables
    appearing in the pattern are distinct from each other *)
-fun check_pat p =
+val check_pat =
    let
       fun strings_in p =
          case p of
@@ -172,7 +179,7 @@ fun check_pat p =
               [] => true
             | x::xs' => not (List.exists (fn y => x=y) xs') andalso all_distinct xs'
    in
-      (all_distinct o strings_in) p
+      all_distinct o strings_in
    end
 
 
@@ -196,7 +203,7 @@ fun match (v,p) =
       | (v1, Variable s) => SOME [(s, v1)]
       | (Unit, UnitP) => SOME []
       | (_, Wildcard) => SOME []
-      | (_, _) => NONE
+      | _ => NONE
 
 
 (* valu -> pattern list -> (string * valu) list option *)

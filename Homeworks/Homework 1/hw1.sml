@@ -118,6 +118,13 @@ fun month_range (day1 : int, day2 : int) =
         then [what_month day2]
         else what_month day1 :: month_range (day1+1, day2)
 
+(* Sample solution from Coursera:
+
+   fun month_range (day1 : int, day2 : int) =
+      if day1 > day2
+      then []
+      else what_month day1 :: month_range(day1 + 1, day2) *)
+
 
 (* (int * int * int) list -> (int * int * int) option *)
 (* osf means oldest date so far *)
