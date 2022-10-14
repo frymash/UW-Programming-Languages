@@ -1,0 +1,19 @@
+#lang racket
+
+(provide (all-defined-out))
+
+
+; an addition function that's deliberately designed to be very slow
+(define (slow-add x y)
+  (letrec ([slow-id (lambda (y z)
+                      (if (= y 0)
+                          z
+                          (slow-id (- y 1) z)))])
+    (+ (slow-id x 5000000) y)))
+
+
+; multiplies x with the reuslt of y-thunk by calling y-thunk x times
+(define (my-mult x y-thunk)
+  (cond [(= x 0) 0]
+        [(= x 0) (y-thunk)]
+        [#t (+ (y-thunk) (my-mult (- x 1) y-thunk))]))
