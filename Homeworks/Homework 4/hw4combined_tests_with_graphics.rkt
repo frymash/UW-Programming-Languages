@@ -6,7 +6,7 @@
 
 ;; Be sure to put your homework file in the same folder as this test file.
 ;; Uncomment the line below and change HOMEWORK_FILE to the name of your homework file.
-;;(require "HOMEWORK_FILE")
+(require "hw4.rkt")
 
 ;; A simple library for displaying a 2x3 grid of pictures: used
 ;; for fun in the tests below (look for "Tests Start Here").  No need to understand
@@ -26,31 +26,50 @@
 (define pic-grid-width 3)
 (define pic-grid-height 2)
 
+
+; (no argument) -> Window
+; Opens a new window with window-name's nameof window-width width,
+; window-height height.
 (define (open-window)
   (open-viewport window-name window-width window-height))
 
+
+; Natural[0,5] -> Posn
+; Converts a picture's grid position to
+; its Posn in the actual window.
+; e.g. If a picture's grid-posn is 5 and pic-grid-width is 3,
+; the Posn of the picture would be (2,2)
 (define (grid-posn-to-posn grid-posn)
   (when (>= grid-posn (* pic-grid-height pic-grid-width))
     (error "picture grid does not have that many positions"))
   (let ([row (quotient grid-posn pic-grid-width)]
-        [col (remainder grid-posn pic-grid-width)])
+        [col (remainder grid-posn pic-grid-width)])  
     (make-posn (+ border-size (* approx-pic-width col))
                (+ border-size (* approx-pic-height row)))))
 
+
+; Window * String * Natural[0,5] -> Window
 (define (place-picture window filename grid-posn)
   (let ([posn (grid-posn-to-posn grid-posn)])
     ((clear-solid-rectangle window) posn approx-pic-width approx-pic-height)
     ((draw-pixmap window) filename posn)))
 
+
+; Window * Natural * Stream * Natural[<= 6] -> Window
+; Feeds pictures from a stream to a 2x3 grid
+; within a given window every pause seconds.
+; The stream must feed a total of n images
+; to the window.
 (define (place-repeatedly window pause stream n)
   (when (> n 0)
-    (let* ([next (stream)]
-           [filename (cdar next)]
-           [grid-posn (caar next)]
+    (let* ([next (stream)]          ; Stream is (cons (Natural[0,5] * String) Stream)
+           [filename (cdar next)]   ; cdar of a Stream will be a String
+           [grid-posn (caar next)]  ; caar of a Stream will be Natural[0,5]
            [stream (cdr next)])
       (place-picture window filename grid-posn)
       (sleep pause)
       (place-repeatedly window pause stream (- n 1)))))
+
 
 ;; Tests Start Here
 
