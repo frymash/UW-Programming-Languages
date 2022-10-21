@@ -1,7 +1,0 @@
-#lang racket
-
-(provide (all-defined-out))
-
-(define pr1 (cons 1 2))
-(define pr2 (cons 3 (cons 4 5)))
-(define pr3 (cons (cons 6 (cons 7 (cons 8 null))) null))

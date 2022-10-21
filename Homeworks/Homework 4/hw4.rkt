@@ -171,10 +171,40 @@
                                                   (mcdr p))))])
                     (if (false? in-cache)
                         (and (assoc-force assoc-delay)
-                            (begin (vector-set! cache next-cache-slot (mcdr assoc-delay))
-                                   (if (= (- n 1) next-cache-slot)
-                                       (set! next-cache-slot 0)
-                                       (set! next-cache-slot (+ 1 next-cache-slot)))
-                                   (mcdr assoc-delay)))
+                             (begin (vector-set! cache next-cache-slot (mcdr assoc-delay))
+                                    (if (= (- n 1) next-cache-slot)
+                                        (set! next-cache-slot 0)
+                                        (set! next-cache-slot (+ 1 next-cache-slot)))
+                                    (mcdr assoc-delay)))
                         in-cache)))])
     aux))
+
+
+;; (Q11 - Challenge problem)
+
+(define-syntax while-less
+  (syntax-rules (do)
+    [(while-less e1 do e2)
+     (letrec ([e1-cache e1]
+              [loop (lambda ()
+                      (or (not (> e1-cache e2))
+                          (loop)))])
+       (loop))]))
+
+
+;; Alternate version: no syntactic sugar but possibly a bit more readable.
+#;
+(define-syntax while-less
+  (syntax-rules (do)
+    [(while-less e1 do e2)
+     (letrec ([e1-cache e1]
+              [loop (lambda ()
+                      (if (> e1-cache e2)
+                          (loop)
+                          #t))])
+       (loop))]))
+
+
+
+
+
