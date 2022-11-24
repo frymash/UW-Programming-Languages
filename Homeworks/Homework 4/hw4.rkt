@@ -126,7 +126,6 @@
 ;; where v1 is the nth element of xs
 ;; and v2 is the nth element of ys.
 
-;; Note: I couldn't
 (define (cycle-lists xs ys)
   (letrec ([build-stream (lambda (xs ys)
                            (cons (cons (car xs)(car ys))
@@ -141,14 +140,15 @@
 
 (define (vector-assoc v vec)
   (letrec ([valid-indexes (let ([v-len (vector-length vec)])
-                            (and (not (= v-len 0))(- v-len 1)))]
+                            (- v-len 1))]
            [check-index (lambda (i)
-                          (let ([target (vector-ref vec i)])
-                            (cond [(or (not (pair? target))
-                                       (not (equal? v (car target))))
-                                   (and (not (> (+ i 1) valid-indexes))
-                                        (check-index (+ i 1)))]
-                                  [#t target])))])
+                          (and (>= valid-indexes 1)
+                               (let ([target (vector-ref vec i)])
+                                 (cond [(or (not (pair? target))
+                                            (not (equal? v (car target))))
+                                        (and (not (> (+ i 1) valid-indexes))
+                                             (check-index (+ i 1)))]
+                                       [#t target]))))])
     (check-index 0)))
 
 
@@ -169,14 +169,14 @@
                                            (begin (set-mcar! p #t)
                                                   (set-mcdr! p ((mcdr p)))
                                                   (mcdr p))))])
-                    (if (false? in-cache)
+                    (if in-cache
+                        in-cache
                         (and (assoc-force assoc-delay)
                              (begin (vector-set! cache next-cache-slot (mcdr assoc-delay))
                                     (if (= (- n 1) next-cache-slot)
                                         (set! next-cache-slot 0)
                                         (set! next-cache-slot (+ 1 next-cache-slot)))
-                                    (mcdr assoc-delay)))
-                        in-cache)))])
+                                    (mcdr assoc-delay))))))])
     aux))
 
 
@@ -203,8 +203,3 @@
                           (loop)
                           #t))])
        (loop))]))
-
-
-
-
-
