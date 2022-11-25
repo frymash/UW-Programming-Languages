@@ -79,36 +79,48 @@
                       (eval-under-env (ifgreater-e4 e) env))]))]
         [(fun? e)
          (closure env e)]
-        [(call? e)
-         (let ([cl (eval-under-env (call-funexp e) env)]
-               [arg (eval-under-env (call-actual e) env)])
+        [(call? e) ; MUPL calls are used whenever you call a function and pass arguments through it
+         (let ([cl (eval-under-env (call-funexp e) env)])
            (if (not (closure? cl))
                (error "TypeError: Function call is not a closure")
-               (eval-under-env (fun-body (closure-fun cl))
-                               (cons (cons (fun-nameopt (closure-fun cl))      ; map the closure's fn to the fn name and cons to local env
-                                            cl)                    
-                                     (cons (cons (fun-formal (closure-fun cl))       ; map the call's arg to the fn parameter name and cons to local env
-                                                 arg)                          
-                                           (closure-env cl))))))]
+               (let ([arg (eval-under-env (call-actual e) env)]
+                     [fn-name (fun-nameopt (closure-fun cl))]
+                     [fn-parameters (fun-formal (closure-fun cl))]
+                     [fn-body (fun-body (closure-fun cl))])
+                 (if (string? fn-name)                                    ; if the function is anonymous, don't add it's name (#f) to the local env
+                     (eval-under-env fn-body
+                                     (cons (cons fn-name cl)              ; map the closure's fn to the fn name and cons to the local env            
+                                           (cons (cons fn-parameters arg) ; map the call's arg to the fn parameter name and cons to the local env            
+                                                 (closure-env cl))))
+                     (eval-under-env fn-body (cons (cons fn-parameters arg)
+                                                   (closure-env cl)))))))]
         [(mlet? e)
          (let ([v (eval-under-env (mlet-e e) env)])
            (eval-under-env (mlet-body e)
                            (cons (cons (mlet-var e) v)
                                   env)))]
         [(apair? e)
-         (apair (eval-under-env (apair-e1 e) env)
-                (eval-under-env (apair-e2 e) env))]
+         (let ([v1 (eval-under-env (apair-e1 e) env)]
+               [v2 (eval-under-env (apair-e2 e) env)])
+           (apair v1 v2))]
         [(fst? e)
-         (eval-under-env (apair-e1 (fst-e e)) env)]
+         (let ([v (eval-under-env (fst-e e) env)])
+           (if (apair? v)
+               (apair-e1 v)
+               (error "TypeError: Argument passed to fst is not a pair")))]
         [(snd? e)
-         (eval-under-env (apair-e2 (snd-e e)) env)]
+         (let ([v (eval-under-env (snd-e e) env)])
+           (if (apair? v)
+               (apair-e2 v)
+               (error "TypeError: Argument passed to snd is not a pair")))]
         [(aunit? e) e]
         [(isaunit? e)
-         (if (equal? (aunit)(isaunit-e e))
+         (if (aunit? (eval-under-env (isaunit-e e) env))
              (int 1)
              (int 0))]
         [(closure? e) e]
         [#t (error (format "bad MUPL expression: ~v" e))]))
+
 
 ;; Do NOT change
 (define (eval-exp e)
@@ -116,19 +128,75 @@
         
 ;; Problem 3
 
-(define (ifaunit e1 e2 e3) "CHANGE")
+;; Q3a)
+;; MUPL exp * MUPL exp * MUPL exp -> MUPL exp
+;; returns a MUPL expression that does the following when evaluated:
+;; returns the result of evaluating e2 if e1 is aunit.
+;; else, it returns the result of evaluating e3
+(define (ifaunit e1 e2 e3)
+  (ifgreater (isaunit e1)
+             (int 0)
+             e2
+             e3))
 
-(define (mlet* lstlst e2) "CHANGE")
 
-(define (ifeq e1 e2 e3 e4) "CHANGE")
+;; Q3b)
+;; ('a.'b) list * MUPL exp -> MUPL exp
+;; returns a MUPL expression that evaluates e2 in an environment
+;; where each ('a.'b) pair represents a variable name-value pair
+(define (mlet* lstlst e2)
+  (call (closure lstlst (fun #f "" e2)) (int 0))) ; simulate a 0-argument anon function
+                                                  ; since closures require a function part
+                                                  ; but assign (int 0) to "" as
+                                                  ; 1 argument is required for fun in MUPL
+
+
+;; Q3c)
+;; MUPL exp * MUPL exp * MUPL exp * MUPL exp -> MUPL exp
+;; acts like ifgreater except e3 is evaluated if and only if e1 and e2 are
+;; equal integers.
+;; assume none of the arguments to ifeq use the mupl variables _x or _y.
+;; use this assumption so that when an expression returned from ifeq is evaluated,
+;; e1 and e2 are evaluated exactly once each.
+(define (ifeq e1 e2 e3 e4)
+  (mlet "v1" (eval-exp e1)
+        (mlet "v2" (eval-exp e2)
+              (ifgreater (var "v1")
+                         (var "v2")
+                         e4
+                         (ifgreater (var "v2")
+                                    (var "v1")
+                                    e4
+                                    e3)))))
+
 
 ;; Problem 4
 
-(define mupl-map "CHANGE")
+;; Q4a)
+;; ('a -> 'b) MUPL function -> MUPL function
+;; takes a MUPL function and returns a MUPL function that takes a MUPL list and
+;; applies the function to every element of the list,
+;; returning a new MUPL list
+(define mupl-map
+  (fun #f "f"
+       (fun "muplmap" "xs"
+            (ifaunit (var "xs")
+                     (aunit)
+                     (apair (call (var "f")(fst (var "xs")))
+                            (call (var "muplmap")(snd (var "xs"))))))))
 
-(define mupl-mapAddN 
-  (mlet "map" mupl-map
-        "CHANGE (notice map is now in MUPL scope)"))
+
+;; Q4b)
+;; MUPL int -> (MUPL int list -> MUPL int list)
+;; takes an mupl integer i and returns a mupl function that
+;; takes a mupl list of mupl integers and returns a new mupl list of
+;; mupl integers that adds i to every element of the list
+(define mupl-mapAddN
+  (fun #f "i"
+       (mlet "map" mupl-map
+             (fun "f" "xs"
+                  (call (call (var "map") (fun #f "x" (add (var "x")(var "i"))))
+                        (var "xs"))))))
 
 ;; Challenge Problem
 
