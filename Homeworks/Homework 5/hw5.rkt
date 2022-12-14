@@ -77,21 +77,24 @@
                   (if (> (int-num v1) (int-num v2))
                       (eval-under-env (ifgreater-e3 e) env)
                       (eval-under-env (ifgreater-e4 e) env))]))]
-        [(fun? e)
+        [(fun? e) ; fun is used when you're defining a function
          (closure env e)]
         [(call? e) ; MUPL calls are used whenever you call a function and pass arguments through it
          (let ([cl (eval-under-env (call-funexp e) env)])
            (if (not (closure? cl))
                (error "TypeError: Function call is not a closure")
-               (let ([arg (eval-under-env (call-actual e) env)]
-                     [fn-name (fun-nameopt (closure-fun cl))]
-                     [fn-parameters (fun-formal (closure-fun cl))]
-                     [fn-body (fun-body (closure-fun cl))])
+               (let* ([fn (closure-fun cl)]
+                      [arg (eval-under-env (call-actual e) env)]
+                      [fn-name (fun-nameopt fn)]
+                      [fn-parameters (fun-formal fn)]
+                      [fn-body (fun-body fn)])
                  (if (string? fn-name)                                    ; if the function is anonymous, don't add it's name (#f) to the local env
                      (eval-under-env fn-body
                                      (cons (cons fn-name cl)              ; map the closure's fn to the fn name and cons to the local env            
                                            (cons (cons fn-parameters arg) ; map the call's arg to the fn parameter name and cons to the local env            
-                                                 (closure-env cl))))
+                                                 (closure-env cl))))      ; (closure-env cl) [the closure's env] is used instead of env due to lexical scoping (ML-style).
+                                                                          ; are there languages where replacing (closure-env cl) with (append env (closure-env cl)) or
+                                                                          ; (append (closure-env cl) env) would be more appropriate?
                      (eval-under-env fn-body (cons (cons fn-parameters arg)
                                                    (closure-env cl)))))))]
         [(mlet? e)
@@ -144,11 +147,13 @@
 ;; ('a.'b) list * MUPL exp -> MUPL exp
 ;; returns a MUPL expression that evaluates e2 in an environment
 ;; where each ('a.'b) pair represents a variable name-value pair
-(define (mlet* lstlst e2)
-  (call (closure lstlst (fun #f "" e2)) (int 0))) ; simulate a 0-argument anon function
-                                                  ; since closures require a function part
-                                                  ; but assign (int 0) to "" as
-                                                  ; 1 argument is required for fun in MUPL
+(define (mlet* bindings e2)
+  (if (null? bindings)
+      e2
+      (mlet (car (car bindings))
+            (cdr (car bindings))
+            (mlet* (cdr bindings)
+                   e2))))
 
 
 ;; Q3c)
@@ -159,13 +164,13 @@
 ;; use this assumption so that when an expression returned from ifeq is evaluated,
 ;; e1 and e2 are evaluated exactly once each.
 (define (ifeq e1 e2 e3 e4)
-  (mlet "v1" (eval-exp e1)
-        (mlet "v2" (eval-exp e2)
-              (ifgreater (var "v1")
-                         (var "v2")
+  (mlet "_x" e1
+        (mlet "_y" e2
+              (ifgreater (var "_x")
+                         (var "_y")
                          e4
-                         (ifgreater (var "v2")
-                                    (var "v1")
+                         (ifgreater (var "_y")
+                                    (var "_x")
                                     e4
                                     e3)))))
 
@@ -191,12 +196,19 @@
 ;; takes an mupl integer i and returns a mupl function that
 ;; takes a mupl list of mupl integers and returns a new mupl list of
 ;; mupl integers that adds i to every element of the list
+;(define mupl-mapAddN
+ ; (mlet "map" mupl-map
+  ;      (fun #f "i"
+   ;          (fun "f" "xs"
+    ;              (call (call (var "map") (fun #f "x" (add (var "x")(var "i"))))
+     ;                   (var "xs"))))))
+
+;; After reviewing Guofan Wu's assignment, I realised that it would've been better
+;; style if I had used a partial application here instead.
 (define mupl-mapAddN
-  (fun #f "i"
-       (mlet "map" mupl-map
-             (fun "f" "xs"
-                  (call (call (var "map") (fun #f "x" (add (var "x")(var "i"))))
-                        (var "xs"))))))
+  (mlet "map" mupl-map
+        (fun #f "i"
+             (call (var "map") (fun #f "x" (add (var "x")(var "i")))))))
 
 ;; Challenge Problem
 

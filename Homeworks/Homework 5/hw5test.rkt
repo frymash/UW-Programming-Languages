@@ -58,6 +58,25 @@
                                   (add (var "x")(var "y"))))
                  (int 30) "mlet* test 2")
 
+   (check-equal? (eval-exp (mlet* (list (cons "x" (int 1000))
+                                        (cons "x" (int 2))
+                                        (cons "y" (add (var "x") (int 6)))
+                                        (cons "z" (apair (var "x") (var "y"))))
+                                  (var "z")))
+                    (apair (int 2) (int 8)) "mlet* test 3")
+
+   (check-equal? (eval-exp (mlet* `(("x" unquote (int 1000))
+                                    ("x" unquote (int 2))
+                                    ("y" unquote (add (var "x")(int 6)))
+                                    ("z" unquote (apair (var "x") (var "y"))))
+                                  (var "z")))
+                 (apair (int 2) (int 8)) "mlet* test 4")
+
+   (check-equal? (eval-exp (mlet* `(("x" unquote (add (int 1) (int 2)))) (var "x")))
+                           (int 3) "mlet* test 5")
+
+
+
    ;; ifeq test
    (check-equal? (eval-exp (ifeq (int 1) (int 2) (int 3) (int 4))) (int 4) "ifeq test")
    
