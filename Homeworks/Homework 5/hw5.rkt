@@ -190,6 +190,24 @@
                      (apair (call (var "f")(fst (var "xs")))
                             (call (var "muplmap")(snd (var "xs"))))))))
 
+;; Orlando Lara mentioned in peer review that mupl-map should be the outer function,
+;; not the inner one. This change requires some modifications to the code.
+
+;; The Coursera peer assessment guidelines would prefer my original solution
+;; as mupl-map calls the inner function recursively while storing the function to be
+;; mapped (var "f") in the environment (hence eliminating the necessity for (var "f")
+;; to be passed to (var "map") after every recursive call)
+
+;(define mupl-map
+ ; (fun "map" "f"
+  ;     (fun #f "xs"
+   ;         (ifaunit (var "xs")
+    ;                 (aunit)
+     ;                (apair (call (var "f")(fst (var "xs")))
+      ;                      (call (call (var "map")(var "f"))
+       ;                                 (snd (var "xs"))))))))
+
+
 
 ;; Q4b)
 ;; MUPL int -> (MUPL int list -> MUPL int list)
@@ -205,24 +223,8 @@
 
 ;; After reviewing Guofan Wu's assignment, I realised that it would've been better
 ;; style if I had used a partial application here instead.
+;; I had used unnecessary function wrapping earlier.
 (define mupl-mapAddN
   (mlet "map" mupl-map
         (fun #f "i"
              (call (var "map") (fun #f "x" (add (var "x")(var "i")))))))
-
-;; Challenge Problem
-
-(struct fun-challenge (nameopt formal body freevars) #:transparent) ;; a recursive(?) 1-argument function
-
-;; We will test this function directly, so it must do
-;; as described in the assignment
-(define (compute-free-vars e) "CHANGE")
-
-;; Do NOT share code with eval-under-env because that will make
-;; auto-grading and peer assessment more difficult, so
-;; copy most of your interpreter here and make minor changes
-(define (eval-under-env-c e env) "CHANGE")
-
-;; Do NOT change this
-(define (eval-exp-c e)
-  (eval-under-env-c (compute-free-vars e) null))
