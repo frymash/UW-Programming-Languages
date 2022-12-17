@@ -1,4 +1,7 @@
 ;; Programming Languages, Homework 5
+;; Lines 6-24 consist of code provided by the instructors from University of Washington.
+;; If you intend on using or replicating this code in any way, please attribute their work to them.
+;; My own work begins from line 25.
 
 #lang racket
 (provide (all-defined-out)) ;; so we can put tests in a second file
