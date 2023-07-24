@@ -43,8 +43,8 @@ class C
   end
 
   def m4
-		a = self.m1; b = m1
-		[a,b]
-	end
+    a = self.m1; b = m1
+    [a,b]
+  end
 
 end
